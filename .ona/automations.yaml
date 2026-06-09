@@ -1,0 +1,41 @@
+tasks:
+  installDeps:
+    name: Install dependencies
+    description: Install the project's Python dependencies.
+    command: |
+      python -m pip install -e .
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+      - prebuild
+
+  migrate:
+    name: Apply database migrations
+    description: Apply Django database migrations.
+    command: |
+      python manage.py migrate
+    triggeredBy:
+      - manual
+    dependsOn:
+      - installDeps
+
+  check:
+    name: Run Django checks
+    description: Run Django's system checks.
+    command: |
+      python manage.py check
+    triggeredBy:
+      - manual
+    dependsOn:
+      - installDeps
+
+services:
+  devServer:
+    name: Django Dev Server
+    description: Run the Django development server.
+    commands:
+      start: |
+        python manage.py migrate
+        python manage.py runserver 0.0.0.0:8000
+      ready: |
+        curl -sf http://localhost:8000 > /dev/null

@@ -1,0 +1,15 @@
+// The Dev Container format allows you to configure your environment. At the heart of it
+// is a Docker image or Dockerfile which controls the tools available in your environment.
+//
+// See https://aka.ms/devcontainer.json for more information.
+{
+	"name": "Django",
+	"image": "mcr.microsoft.com/devcontainers/python:3.12",
+	"forwardPorts": [8000],
+	"portsAttributes": {
+		"8000": {
+			"label": "Django Dev Server",
+			"onAutoForward": "notify"
+		}
+	}
+}
