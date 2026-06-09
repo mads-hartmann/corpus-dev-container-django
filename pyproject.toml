@@ -1,0 +1,9 @@
+[project]
+name = "corpus-dev-container-django"
+version = "0.1.0"
+description = "Minimal Django starter project for dev container corpus testing."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "Django==6.0.6",
+]
