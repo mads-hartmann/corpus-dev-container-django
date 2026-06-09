@@ -1,0 +1,23 @@
+tasks:
+  installDeps:
+    name: Install dependencies
+    description: Install the Django project and its dependencies.
+    command: |
+      python -m pip install --upgrade pip
+      python -m pip install -e .
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+      - prebuild
+
+services:
+  devServer:
+    name: Django Dev Server
+    description: Apply migrations and run the Django development server.
+    commands:
+      start: |
+        ona environment port open 8000 --dont-wait --admission creator_only --name "Django Dev Server"
+        python manage.py migrate --noinput
+        python manage.py runserver 0.0.0.0:8000
+      ready: |
+        curl -sf http://localhost:8000/ > /dev/null
