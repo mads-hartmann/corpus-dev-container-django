@@ -1,0 +1,37 @@
+tasks:
+  installDeps:
+    name: Install dependencies
+    description: Create a virtualenv and install the project in editable mode.
+    command: |
+      python -m venv .venv
+      .venv/bin/python -m pip install -e .
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+      - prebuild
+
+  check:
+    name: Run checks
+    description: Run Django system checks.
+    command: |
+      .venv/bin/python manage.py check
+    triggeredBy:
+      - manual
+    dependsOn:
+      - installDeps
+
+services:
+  devServer:
+    name: Django Dev Server
+    description: Run the Django development server.
+    triggeredBy:
+      - manual
+      - postEnvironmentStart
+    commands:
+      start: |
+        ona environment port open 8000 --dont-wait --admission creator_only --name "Django Dev Server"
+        export PYTHONPATH="$PWD/.devcontainer:${PYTHONPATH:-}"
+        export DJANGO_SETTINGS_MODULE=ona_dev_settings
+        .venv/bin/python manage.py runserver 0.0.0.0:8000
+      ready: |
+        curl -sf http://localhost:8000/admin/
