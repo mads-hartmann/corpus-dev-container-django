@@ -1,0 +1,27 @@
+tasks:
+  installDeps:
+    name: Install dependencies
+    description: Create the virtualenv, install the project, and apply migrations.
+    command: |
+      python3 -m venv .venv
+      .venv/bin/python -m pip install -e .
+      .venv/bin/python manage.py migrate
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+      - prebuild
+
+services:
+  devServer:
+    name: Django Dev Server
+    description: Run the Django development server on port 8000.
+    triggeredBy:
+      - manual
+      - postEnvironmentStart
+    commands:
+      start: |
+        ona environment port open 8000 --dont-wait --admission creator_only --name "Django Dev Server"
+        export ALLOWED_HOSTS="*"
+        .venv/bin/python manage.py runserver 0.0.0.0:8000
+      ready: |
+        curl -sf http://localhost:8000/admin/ -o /dev/null
