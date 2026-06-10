@@ -30,8 +30,12 @@ services:
     commands:
       start: |
         ona environment port open 8000 --dont-wait --admission creator_only --name "Django Dev Server"
-        export PYTHONPATH="$PWD/.devcontainer:${PYTHONPATH:-}"
-        export DJANGO_SETTINGS_MODULE=ona_dev_settings
-        .venv/bin/python manage.py runserver 0.0.0.0:8000
+        # The project's ALLOWED_HOSTS is empty, so Django would reject requests
+        # arriving through Ona's exposed-port domain. Generate a throwaway dev-only
+        # settings module that reuses config.settings and relaxes the host allowlist,
+        # then point Django at it. Kept out of the repo so application settings stay
+        # untouched; autoreload keeps working because manage.py runs normally.
+        printf 'from config.settings import *\nALLOWED_HOSTS = ["*"]\n' > /tmp/ona_dev_settings.py
+        PYTHONPATH=/tmp DJANGO_SETTINGS_MODULE=ona_dev_settings .venv/bin/python manage.py runserver 0.0.0.0:8000
       ready: |
         curl -sf http://localhost:8000/admin/
