@@ -1,0 +1,41 @@
+tasks:
+  installDeps:
+    name: Install dependencies
+    description: Create a virtualenv and install the project in editable mode.
+    command: |
+      python3 -m venv .venv
+      .venv/bin/python -m pip install -e .
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+      - prebuild
+
+  check:
+    name: Run checks
+    description: Run Django's system checks.
+    command: |
+      .venv/bin/python manage.py check
+    triggeredBy:
+      - manual
+    dependsOn:
+      - installDeps
+
+services:
+  devserver:
+    name: Django dev server
+    description: Run the Django development server.
+    triggeredBy:
+      - manual
+      - postEnvironmentStart
+    commands:
+      start: |
+        ona environment port open 8000 --dont-wait --admission creator_only --name "Django dev server"
+        until url="$(ona environment port get 8000 -f URL 2>/dev/null)" && [ -n "$url" ]; do
+          echo "Waiting for forwarded port 8000..."
+          sleep 1
+        done
+        export DJANGO_ALLOWED_HOSTS="$(echo "$url" | cut -c 9-),localhost,127.0.0.1"
+        export DJANGO_CSRF_TRUSTED_ORIGINS="$url"
+        .venv/bin/python manage.py runserver 0.0.0.0:8000
+      ready: |
+        curl -sf http://localhost:8000 > /dev/null
