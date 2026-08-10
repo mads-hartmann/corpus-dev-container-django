@@ -1,0 +1,26 @@
+tasks:
+  install-dependencies:
+    name: Install dependencies
+    command: |
+      python -m venv .venv
+      .venv/bin/python -m pip install -e .
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+      - prebuild
+
+services:
+  django:
+    name: django
+    commands:
+      start: |
+        until .venv/bin/python -c 'import django' >/dev/null 2>&1; do sleep 1; done
+        printf '%s\n' 'from config.settings import *' 'ALLOWED_HOSTS = ["*"]' > /tmp/ona_django_settings.py
+        DJANGO_SETTINGS_MODULE=ona_django_settings PYTHONPATH="/tmp${PYTHONPATH:+:$PYTHONPATH}" .venv/bin/python manage.py runserver 0.0.0.0:8000 &
+        server_pid=$!
+        ona environment port open 8000 --admission creator_only --name django --protocol http
+        wait "$server_pid"
+      ready: curl --fail --silent http://localhost:8000/ >/dev/null
+    triggeredBy:
+      - manual
+      - postEnvironmentStart
