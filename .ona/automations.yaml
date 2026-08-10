@@ -14,7 +14,10 @@ services:
     name: django
     commands:
       start: |
-        until .venv/bin/python -c 'import django' >/dev/null 2>&1; do sleep 1; done
+        if ! .venv/bin/python -c 'import django' >/dev/null 2>&1; then
+          python -m venv .venv
+          .venv/bin/python -m pip install -e .
+        fi
         printf '%s\n' 'from config.settings import *' 'ALLOWED_HOSTS = ["*"]' > /tmp/ona_django_settings.py
         DJANGO_SETTINGS_MODULE=ona_django_settings PYTHONPATH="/tmp${PYTHONPATH:+:$PYTHONPATH}" .venv/bin/python manage.py runserver 0.0.0.0:8000 &
         server_pid=$!
