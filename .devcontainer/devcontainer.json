@@ -1,4 +1,11 @@
 {
-  "name": "Django development",
-  "image": "mcr.microsoft.com/devcontainers/python:3.12"
+	"name": "Django Starter",
+	"image": "mcr.microsoft.com/devcontainers/python:3.12",
+	"forwardPorts": [8000],
+	"portsAttributes": {
+		"8000": {
+			"label": "Django dev server",
+			"onAutoForward": "notify"
+		}
+	}
 }
