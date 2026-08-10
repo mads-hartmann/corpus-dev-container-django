@@ -1,0 +1,24 @@
+tasks:
+  install-dependencies:
+    name: Install dependencies
+    description: Create the project virtual environment and install Python dependencies.
+    command: |
+      python -m venv .venv
+      .venv/bin/python -m pip install -e .
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+      - prebuild
+
+services:
+  django:
+    name: Django
+    description: Run the Django development server.
+    commands:
+      start: |
+        ona environment port open 8000 --admission creator_only --name Django
+        DJANGO_SETTINGS_MODULE=config.settings .venv/bin/python -c 'from django.conf import settings; settings.ALLOWED_HOSTS = ["*"]; from django.core.management import execute_from_command_line; execute_from_command_line(["manage.py", "runserver", "0.0.0.0:8000", "--noreload"])'
+      ready: curl -fsS http://localhost:8000/
+    triggeredBy:
+      - manual
+      - postEnvironmentStart
