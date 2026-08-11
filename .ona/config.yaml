@@ -1,0 +1,40 @@
+tasks:
+  installDeps:
+    name: Install dependencies
+    description: Create the project virtual environment and install its Python dependencies.
+    command: |
+      python3 -m venv .venv
+      .venv/bin/python -m pip install -e .
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+      - prebuild
+
+  check:
+    name: Django checks
+    description: Run Django's deployment and configuration checks.
+    command: .venv/bin/python manage.py check
+    triggeredBy:
+      - manual
+    dependsOn:
+      - installDeps
+
+services:
+  django:
+    name: Django development server
+    description: Run the Django development server.
+    triggeredBy:
+      - manual
+      - postEnvironmentStart
+    commands:
+      start: |
+        ona environment port open 8000 --admission creator_only --name "Django development server"
+        EXPOSED_HOST="$(ona environment port get 8000 -f URL | cut -c 9-)"
+        DJANGO_SETTINGS_MODULE=config.settings EXPOSED_HOST="$EXPOSED_HOST" .venv/bin/python -c '
+        import os
+        from config import settings
+        settings.ALLOWED_HOSTS = ["localhost", "127.0.0.1", os.environ["EXPOSED_HOST"]]
+        from django.core.management import execute_from_command_line
+        execute_from_command_line(["manage.py", "runserver", "0.0.0.0:8000", "--noreload"])
+        '
+      ready: curl -fsS http://localhost:8000
