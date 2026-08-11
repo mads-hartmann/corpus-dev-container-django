@@ -1,0 +1,31 @@
+tasks:
+  installDeps:
+    name: Install dependencies
+    description: Install the Django project in editable mode.
+    command: python -m pip install -e .
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+      - prebuild
+
+  check:
+    name: Django checks
+    description: Run Django's system checks.
+    command: python manage.py check
+    triggeredBy:
+      - manual
+    dependsOn:
+      - installDeps
+
+services:
+  django:
+    name: Django development server
+    description: Run the Django development server.
+    triggeredBy:
+      - manual
+      - postEnvironmentStart
+    commands:
+      start: |
+        ona environment port open 8000 --admission creator_only --name "Django development server"
+        python -c 'import os; os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings"); from django.conf import settings; settings.ALLOWED_HOSTS = ["*"]; from django.core.management import execute_from_command_line; execute_from_command_line(["manage.py", "runserver", "0.0.0.0:8000", "--noreload"])'
+      ready: curl -fsS http://localhost:8000/admin/login/
