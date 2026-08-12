@@ -1,0 +1,31 @@
+tasks:
+  install-dependencies:
+    name: Install dependencies
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+      - prebuild
+    command: python -m pip install -e .
+
+  django-check:
+    name: Django check
+    triggeredBy:
+      - manual
+    dependsOn:
+      - install-dependencies
+    command: python manage.py check
+
+services:
+  django:
+    name: Django
+    triggeredBy:
+      - manual
+      - postEnvironmentStart
+    commands:
+      start: |
+        ona environment port open 8000 --admission creator_only --name "Django"
+        export ONA_EXPOSED_HOST="$(ona environment port get 8000 -f URL | cut -c 9-)"
+        python manage.py runserver 0.0.0.0:8000
+      ready: |
+        export ONA_EXPOSED_HOST="$(ona environment port get 8000 -f URL | cut -c 9-)"
+        curl -fsS -H "Host: ${ONA_EXPOSED_HOST}" http://localhost:8000/admin/login/ >/dev/null
