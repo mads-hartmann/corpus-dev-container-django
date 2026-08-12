@@ -1,0 +1,28 @@
+tasks:
+  install:
+    name: Install dependencies
+    command: python3 -m venv .venv && .venv/bin/python -m pip install -e .
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+      - prebuild
+  check:
+    name: Run Django checks
+    command: .venv/bin/python manage.py check
+    dependsOn:
+      - install
+    triggeredBy:
+      - manual
+
+services:
+  django:
+    name: Django development server
+    commands:
+      start: |
+        ona environment port open 8000 --admission creator_only --name django
+        export ONA_EXPOSED_HOST="$(ona environment port get 8000 -f URL | cut -c 9-)"
+        .venv/bin/python manage.py runserver 0.0.0.0:8000
+      ready: curl -sS -o /dev/null -w '%{http_code}' http://localhost:8000/ | grep -qE '^[1-4][0-9][0-9]$'
+    triggeredBy:
+      - manual
+      - postEnvironmentStart
