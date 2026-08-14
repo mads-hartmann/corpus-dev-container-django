@@ -1,0 +1,32 @@
+tasks:
+  install-dependencies:
+    name: Install dependencies
+    triggeredBy:
+      - manual
+      - postDevcontainerStart
+      - prebuild
+    prebuildRequiresSuccess: true
+    command: python3 -m venv .venv && .venv/bin/python -m pip install -e .
+
+  check:
+    name: Run Django checks
+    triggeredBy:
+      - manual
+    dependsOn:
+      - install-dependencies
+    command: .venv/bin/python manage.py check
+
+services:
+  django:
+    name: Django development server
+    description: Django development server
+    triggeredBy:
+      - manual
+      - postEnvironmentStart
+    commands:
+      start: |
+        ona environment port open 8000 --admission creator_only --name "Django development server" --protocol http
+        export ONA_EXPOSED_HOST="$(ona environment port get 8000 -f URL | cut -c 9-)"
+        export DJANGO_ALLOWED_HOSTS="${ONA_EXPOSED_HOST},localhost,127.0.0.1"
+        exec .venv/bin/python manage.py runserver 0.0.0.0:8000
+      ready: curl -fsS http://localhost:8000/ > /dev/null
